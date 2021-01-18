@@ -17,9 +17,13 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.15
-
-    - name: Build
-      run: go build -v ./...
+    
+    -
+      name: Run Mage
+      uses: magefile/mage-action@v1
+      with:
+        version: latest
+        args: build
 
     - name: Test
-      run: go test -v ./...
+      run: mage test

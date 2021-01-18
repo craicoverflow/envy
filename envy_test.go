@@ -48,7 +48,7 @@ func TestParseBool(t *testing.T) {
 			args: args{
 				value: "0",
 			},
-			want:    false,
+			want:    true,
 			wantErr: nil,
 		},
 		{
