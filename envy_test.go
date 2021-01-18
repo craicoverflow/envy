@@ -6,9 +6,12 @@ import (
 	"testing"
 )
 
+const envName = "TEST_ENV"
+
 func TestParseBool(t *testing.T) {
 	type args struct {
-		value string
+		value   string
+		skipSet bool
 	}
 	tests := []struct {
 		name    string
@@ -67,9 +70,11 @@ func TestParseBool(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			envKey := "ENV_KEY"
-			os.Setenv(envKey, tt.args.value)
-			got, err := ParseBool(envKey)
+			os.Unsetenv(envName)
+			if !tt.args.skipSet {
+				os.Setenv(envName, tt.args.value)
+			}
+			got, err := ParseBool(envName)
 			if baseErr := errors.Unwrap(err); baseErr != tt.wantErr {
 				t.Errorf("ParseBool() error = %v, wantErr %v", baseErr, tt.wantErr)
 				return
@@ -84,6 +89,7 @@ func TestParseBool(t *testing.T) {
 func TestParseInt(t *testing.T) {
 	type args struct {
 		value   string
+		skipSet bool
 		base    int
 		bitSize int
 	}
@@ -126,9 +132,11 @@ func TestParseInt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			envKey := "ENV_KEY"
-			os.Setenv(envKey, tt.args.value)
-			got, err := ParseInt(envKey, tt.args.base, tt.args.bitSize)
+			os.Unsetenv(envName)
+			if !tt.args.skipSet {
+				os.Setenv(envName, tt.args.value)
+			}
+			got, err := ParseInt(envName, tt.args.base, tt.args.bitSize)
 			if baseErr := errors.Unwrap(err); (baseErr != nil && tt.wantErr != nil) &&
 				baseErr.Error() != tt.wantErr.Error() {
 				t.Errorf("ParseInt() error = %v, wantErr %v", err, tt.wantErr)
@@ -136,6 +144,52 @@ func TestParseInt(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("ParseInt() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGet(t *testing.T) {
+	type args struct {
+		value   string
+		skipSet bool
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr error
+	}{
+		{
+			name: "Get environmet variable value",
+			args: args{
+				value: "myname",
+			},
+			want: "myname",
+		},
+		{
+			name: "Should throw ErrNotFound",
+			args: args{
+				skipSet: true,
+			},
+			want:    "",
+			wantErr: ErrNotFound,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			os.Unsetenv(envName)
+			if !tt.args.skipSet {
+				os.Setenv(envName, tt.args.value)
+			}
+			got, err := Get(envName)
+			if baseErr := errors.Unwrap(err); (baseErr != nil && tt.wantErr != nil) &&
+				baseErr.Error() != tt.wantErr.Error() {
+				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Get() = %v, want %v", got, tt.want)
 			}
 		})
 	}
