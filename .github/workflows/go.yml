@@ -18,12 +18,8 @@ jobs:
       with:
         go-version: 1.15
     
-    -
-      name: Run Mage
-      uses: magefile/mage-action@v1
-      with:
-        version: latest
-        args: build
-
     - name: Test
-      run: mage test
+      run: make test
+
+    - name: Lint
+      run: make lint
