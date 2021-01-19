@@ -48,6 +48,7 @@ func ParseInt(key string, base int, bitSize int) (int64, error) {
 		return parsedVal, nil
 	}
 
+	// nolint
 	if err.(*strconv.NumError).Err == strconv.ErrRange {
 		err = &EnvError{
 			Func: fnParseInt,
@@ -62,7 +63,8 @@ func ParseInt(key string, base int, bitSize int) (int64, error) {
 		err = &EnvError{
 			Func: fnParseInt,
 			Key:  key,
-			Err:  err.(*strconv.NumError).Err,
+			// nolint
+			Err: err.(*strconv.NumError).Err,
 		}
 	}
 

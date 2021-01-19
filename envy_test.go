@@ -69,6 +69,7 @@ func TestParseBool(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		// nolint
 		t.Run(tt.name, func(t *testing.T) {
 			os.Unsetenv(envName)
 			if !tt.args.skipSet {
@@ -131,6 +132,7 @@ func TestParseInt(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		// nolint
 		t.Run(tt.name, func(t *testing.T) {
 			os.Unsetenv(envName)
 			if !tt.args.skipSet {
@@ -161,7 +163,7 @@ func TestGet(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "Get environmet variable value",
+			name: "Get environment variable value",
 			args: args{
 				value: "myname",
 			},
@@ -177,6 +179,7 @@ func TestGet(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		// nolint
 		t.Run(tt.name, func(t *testing.T) {
 			os.Unsetenv(envName)
 			if !tt.args.skipSet {

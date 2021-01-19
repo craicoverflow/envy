@@ -35,15 +35,3 @@ func syntaxError(key string, fn string) *EnvError {
 func notFoundError(key string, fn string) *EnvError {
 	return &EnvError{fn, key, ErrNotFound}
 }
-
-func rangeError(key string, fn string) *EnvError {
-	return &EnvError{fn, key, ErrRange}
-}
-
-func baseError(fn, str string, base int) *EnvError {
-	return &EnvError{fn, str, errors.New("invalid base " + strconv.Itoa(base))}
-}
-
-func bitSizeError(fn, str string, bitSize int) *EnvError {
-	return &EnvError{fn, str, errors.New("invalid bit size " + strconv.Itoa(bitSize))}
-}
