@@ -1,7 +1,6 @@
 package envy
 
 import (
-	"errors"
 	"os"
 	"testing"
 )
@@ -17,7 +16,7 @@ func TestParseBool(t *testing.T) {
 		name    string
 		args    args
 		want    bool
-		wantErr error
+		wantErr bool
 	}{
 		{
 			name: "Throw error when environment variable is not set",
@@ -25,7 +24,7 @@ func TestParseBool(t *testing.T) {
 				value: "",
 			},
 			want:    false,
-			wantErr: ErrNotFound,
+			wantErr: true,
 		},
 		{
 			name: "Parse 'true' as environment variable",
@@ -33,7 +32,7 @@ func TestParseBool(t *testing.T) {
 				value: "true",
 			},
 			want:    true,
-			wantErr: nil,
+			wantErr: false,
 		},
 		{
 			name: "Parse 'false' as environment variable",
@@ -41,7 +40,7 @@ func TestParseBool(t *testing.T) {
 				value: "false",
 			},
 			want:    false,
-			wantErr: nil,
+			wantErr: false,
 		},
 		{
 			name: "Parse '0' as environment variable",
@@ -49,7 +48,7 @@ func TestParseBool(t *testing.T) {
 				value: "0",
 			},
 			want:    false,
-			wantErr: nil,
+			wantErr: false,
 		},
 		{
 			name: "Parse number string to bool fails",
@@ -57,7 +56,7 @@ func TestParseBool(t *testing.T) {
 				value: "22",
 			},
 			want:    false,
-			wantErr: ErrSyntax,
+			wantErr: true,
 		},
 		{
 			name: "Parsing alphabetical character string as environment variable fails",
@@ -65,7 +64,7 @@ func TestParseBool(t *testing.T) {
 				value: "a",
 			},
 			want:    false,
-			wantErr: ErrSyntax,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -76,8 +75,8 @@ func TestParseBool(t *testing.T) {
 				os.Setenv(envName, tt.args.value)
 			}
 			got, err := ParseBool(envName)
-			if baseErr := errors.Unwrap(err); baseErr != tt.wantErr {
-				t.Errorf("ParseBool() error = %v, wantErr %v", baseErr, tt.wantErr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseBool() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if err == nil && got != tt.want {
@@ -98,8 +97,18 @@ func TestParseInt(t *testing.T) {
 		name    string
 		args    args
 		want    int64
-		wantErr error
+		wantErr bool
 	}{
+		{
+			name: "Should throw ErrNotFound when environment variable does not exist",
+			args: args{
+				value:   "1",
+				base:    0,
+				bitSize: 32,
+				skipSet: true,
+			},
+			wantErr: true,
+		},
 		{
 			name: "Integer value should parse successfully",
 			args: args{
@@ -108,27 +117,17 @@ func TestParseInt(t *testing.T) {
 				bitSize: 32,
 			},
 			want:    1,
-			wantErr: nil,
+			wantErr: false,
 		},
 		{
-			name: "Float value should fail to parse",
+			name: "Integer value should fail to parse",
 			args: args{
 				value:   "1.0",
 				base:    0,
 				bitSize: 64,
 			},
 			want:    0,
-			wantErr: ErrSyntax,
-		},
-		{
-			name: "Should be invalid bit size error",
-			args: args{
-				value:   "18446744073709551616",
-				base:    0,
-				bitSize: 1<<32 - 1,
-			},
-			want:    0,
-			wantErr: errors.New("invalid bit size 4294967295"),
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -139,13 +138,71 @@ func TestParseInt(t *testing.T) {
 				os.Setenv(envName, tt.args.value)
 			}
 			got, err := ParseInt(envName, tt.args.base, tt.args.bitSize)
-			if baseErr := errors.Unwrap(err); (baseErr != nil && tt.wantErr != nil) &&
-				baseErr.Error() != tt.wantErr.Error() {
+			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseInt() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
 				t.Errorf("ParseInt() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseFloat(t *testing.T) {
+	type args struct {
+		value   string
+		skipSet bool
+		bitSize int
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    float64
+		wantErr bool
+	}{
+		{
+			name: "Should throw ErrNotFound when environment variable does not exist",
+			args: args{
+				value:   "1",
+				bitSize: 32,
+				skipSet: true,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Float value should parse successfully",
+			args: args{
+				value:   "1.502",
+				bitSize: 64,
+			},
+			want:    1.502,
+			wantErr: false,
+		},
+		{
+			name: "Float value should fail to parse non-float value",
+			args: args{
+				value:   "dsfdk",
+				bitSize: 64,
+			},
+			want: 0.00,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		// nolint
+		t.Run(tt.name, func(t *testing.T) {
+			os.Unsetenv(envName)
+			if !tt.args.skipSet {
+				os.Setenv(envName, tt.args.value)
+			}
+			got, err := ParseFloat(envName, tt.args.bitSize)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseFloat() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ParseFloat() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -160,7 +217,7 @@ func TestGet(t *testing.T) {
 		name    string
 		args    args
 		want    string
-		wantErr error
+		wantErr bool
 	}{
 		{
 			name: "Get environment variable value",
@@ -175,7 +232,7 @@ func TestGet(t *testing.T) {
 				skipSet: true,
 			},
 			want:    "",
-			wantErr: ErrNotFound,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -186,8 +243,7 @@ func TestGet(t *testing.T) {
 				os.Setenv(envName, tt.args.value)
 			}
 			got, err := Get(envName)
-			if baseErr := errors.Unwrap(err); (baseErr != nil && tt.wantErr != nil) &&
-				baseErr.Error() != tt.wantErr.Error() {
+			if (err != nil) != tt.wantErr {
 				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}

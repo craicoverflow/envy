@@ -26,7 +26,7 @@ func ParseBool(key string) (bool, error) {
 
 	parsedVal, err := strconv.ParseBool(val)
 	if err != nil {
-		return false, syntaxError(key, "ParseBool")
+		return false, &EnvError{"ParseBool", key, err}
 	}
 
 	return parsedVal, err
@@ -44,28 +44,8 @@ func ParseInt(key string, base int, bitSize int) (int64, error) {
 
 	parsedVal, err := strconv.ParseInt(val, base, bitSize)
 
-	if err == nil {
-		return parsedVal, nil
-	}
-
-	// nolint
-	if err.(*strconv.NumError).Err == strconv.ErrRange {
-		err = &EnvError{
-			Func: fnParseInt,
-			Key:  key,
-			Err:  ErrRange,
-		}
-
-		return parsedVal, err
-	}
-
 	if err != nil {
-		err = &EnvError{
-			Func: fnParseInt,
-			Key:  key,
-			// nolint
-			Err: err.(*strconv.NumError).Err,
-		}
+		return 0, &EnvError{fnParseInt, key, err}
 	}
 
 	return parsedVal, err
@@ -73,16 +53,18 @@ func ParseInt(key string, base int, bitSize int) (int64, error) {
 
 // ParseFloat returns an environment variable parsed to a Boolean
 func ParseFloat(key string, bitSize int) (float64, error) {
+	fnParseFloat := "ParseFloat"
+
 	val := os.Getenv(key)
 
 	if val == "" {
-		return 0, notFoundError(key, "ParseInt")
+		return 0, notFoundError(key, fnParseFloat)
 	}
 
 	parsedVal, err := strconv.ParseFloat(val, bitSize)
 
 	if err != nil {
-		return 0, syntaxError(key, "ParseInt")
+		return 0, &EnvError{fnParseFloat, key, err}
 	}
 
 	return parsedVal, err

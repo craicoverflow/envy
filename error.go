@@ -9,10 +9,6 @@ import (
 var (
 	// ErrNotFound defines when an environment variable does not exist
 	ErrNotFound = errors.New("environment variable does not exist")
-	// ErrSyntax defines when a value does not have the correct syntax for the target type
-	ErrSyntax = errors.New("invalid syntax")
-	// ErrRange defines when a value has an invalid range
-	ErrRange = errors.New("invalid range")
 )
 
 // EnvError records a failed conversion
@@ -27,10 +23,6 @@ func (e *EnvError) Error() string {
 }
 
 func (e *EnvError) Unwrap() error { return e.Err }
-
-func syntaxError(key string, fn string) *EnvError {
-	return &EnvError{fn, key, ErrSyntax}
-}
 
 func notFoundError(key string, fn string) *EnvError {
 	return &EnvError{fn, key, ErrNotFound}
