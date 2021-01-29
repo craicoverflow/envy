@@ -185,7 +185,7 @@ func TestParseFloat(t *testing.T) {
 				value:   "dsfdk",
 				bitSize: 64,
 			},
-			want: 0.00,
+			want:    0.00,
 			wantErr: true,
 		},
 	}
