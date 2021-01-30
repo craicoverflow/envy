@@ -12,6 +12,7 @@ coverage:
 
 format:
 	go fmt ./...
+.PHONY: format
 
 lint:
 	golangci-lint run
